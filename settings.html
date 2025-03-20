@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Booster - Settings</title>
+    <link rel="stylesheet" href="dressing.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Mysuru:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-profile">
+                <img src="img/profile-picture.png" alt="Profile Picture">
+                <span class="username">Hi, Import</span>
+            </div>
+            <div class="sidebar-buttons">
+                <button class="btn logout-button">Logout</button>
+                <a href="settings.html" role="button">
+                    <button class="btn settings-button">Settings</button>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="body">
+            <section class="menu-container settings-container">
+                <header class="menu-header">
+                    <h2>Settings</h2>
+                    <p>Configure your Game Booster settings</p>
+                </header>
+
+                <form id="settings-form" class="settings-form">
+                    <div class="settings-section">
+                        <h3>Steam Settings</h3>
+                        <div class="form-group">
+                            <label for="steam-username">Steam Username</label>
+                            <input type="text" id="steam-username" name="steamUsername" placeholder="Enter your Steam username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="steam-password">Steam Password</label>
+                            <input type="password" id="steam-password" name="steamPassword" placeholder="Enter your Steam password">
+                            <button type="button" id="toggle-password" class="toggle-password">Show</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="game-id">Game ID</label>
+                            <input type="number" id="game-id" name="gameId" placeholder="Enter game ID (e.g. 730 for CS:GO)">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Discord Settings</h3>
+                        <div class="form-group">
+                            <label for="webhook-url">Discord Webhook URL</label>
+                            <input type="text" id="webhook-url" name="webhookURL" placeholder="Enter Discord webhook URL">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="target-channel-id">Target Channel ID</label>
+                            <input type="text" id="target-channel-id" name="targetChannelId" placeholder="Enter target channel ID">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="server-id">Server ID</label>
+                            <input type="text" id="server-id" name="serverId" placeholder="Enter server ID">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn save-button">Save Settings</button>
+                        <a href="home.html" class="btn cancel-button">Cancel</a>
+                    </div>
+                </form>
+
+                <div id="settings-message" class="settings-message"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsForm = document.getElementById('settings-form');
+            const togglePasswordBtn = document.getElementById('toggle-password');
+            const passwordInput = document.getElementById('steam-password');
+            const settingsMessage = document.getElementById('settings-message');
+            
+            // Load saved settings from localStorage
+            const loadSettings = () => {
+                const savedSettings = JSON.parse(localStorage.getItem('gameBoosterSettings') || '{}');
+                
+                if (savedSettings.steamUsername) {
+                    document.getElementById('steam-username').value = savedSettings.steamUsername;
+                }
+                if (savedSettings.steamPassword) {
+                    document.getElementById('steam-password').value = savedSettings.steamPassword;
+                }
+                if (savedSettings.webhookURL) {
+                    document.getElementById('webhook-url').value = savedSettings.webhookURL;
+                }
+                if (savedSettings.gameId) {
+                    document.getElementById('game-id').value = savedSettings.gameId;
+                }
+                if (savedSettings.targetChannelId) {
+                    document.getElementById('target-channel-id').value = savedSettings.targetChannelId;
+                }
+                if (savedSettings.serverId) {
+                    document.getElementById('server-id').value = savedSettings.serverId;
+                }
+            };
+            
+            // Toggle password visibility
+            togglePasswordBtn.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    togglePasswordBtn.textContent = 'Hide';
+                } else {
+                    passwordInput.type = 'password';
+                    togglePasswordBtn.textContent = 'Show';
+                }
+            });
+            
+            // Form submission
+            settingsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const formData = {
+                    steamUsername: document.getElementById('steam-username').value,
+                    steamPassword: document.getElementById('steam-password').value,
+                    webhookURL: document.getElementById('webhook-url').value,
+                    gameId: document.getElementById('game-id').value,
+                    targetChannelId: document.getElementById('target-channel-id').value,
+                    serverId: document.getElementById('server-id').value
+                };
+                
+                try {
+                    // Save to localStorage
+                    localStorage.setItem('gameBoosterSettings', JSON.stringify(formData));
+                    
+                    // Send to server
+                    const response = await fetch('/api/updateSettings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        settingsMessage.textContent = 'Settings saved successfully!';
+                        settingsMessage.className = 'settings-message success';
+                        setTimeout(() => {
+                            window.location.href = 'home.html';
+                        }, 1500);
+                    } else {
+                        settingsMessage.textContent = 'Failed to save settings: ' + result.message;
+                        settingsMessage.className = 'settings-message error';
+                    }
+                } catch (error) {
+                    console.error('Error saving settings:', error);
+                    settingsMessage.textContent = 'Error saving settings. Please try again.';
+                    settingsMessage.className = 'settings-message error';
+                }
+            });
+            
+            // Load saved settings on page load
+            loadSettings();
+        });
+    </script>
+</body>
+</html>

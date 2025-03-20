@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Booster</title>
+    <link rel="stylesheet" href="dressing.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Mysuru:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Sidebar Section -->
+        <aside class="sidebar">
+            <div class="sidebar-profile">
+                <img src="img/profile-picture.png" alt="Profile Picture">
+                <span class="username"></span>
+            </div>
+            <div class="sidebar-buttons">
+                <a href="home.html" role="button">
+                    <button class="btn dashboard-button">Dashboard</button>
+                </a>
+                <a href="settings.html" role="button">
+                    <button class="btn settings-button">Settings</button>
+                </a>
+                
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="body">
+            <section class="menu-container">
+                <header class="menu-header">
+                    <div class="user-info">
+                        <span id="steam-username">Username: Loading...</span>
+                        <span id="steam-gameid">Game ID: Loading...</span>
+                    </div>
+                    <div class="status">
+                        <span id="boost-status">Live Status: Connecting...</span>
+                        <span id="boost-timer">Duration: 00:00:00</span>
+                        <div class="status-selector">
+                            <select id="steam-status">
+                                <option value="ONLINE">Online</option>
+                                <option value="BUSY">Busy</option>
+                                <option value="AWAY">Away</option>
+                                <option value="SNOOZE">Snooze</option>
+                                <option value="LOOKING_TO_TRADE">Looking to Trade</option>
+                                <option value="LOOKING_TO_PLAY">Looking to Play</option>
+                                <option value="INVISIBLE">Invisible</option>
+                                <option value="OFFLINE">Offline</option>
+                            </select>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="menu-buttons">
+                    <button id="start-boost" class="menu-button"><img src="img/play-circle.svg" alt="Start"></button>
+                    <button id="stop-boost" class="menu-button"><img src="img/stop-circle.svg" alt="Stop"></button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // WebSocket connection
+        const ws = new WebSocket('ws://localhost:8080');
+        
+        
+        // UI Elements
+        const steamUsername = document.getElementById('steam-username');
+        const steamGameId = document.getElementById('steam-gameid');
+        const boostStatus = document.getElementById('boost-status');
+        const startButton = document.getElementById('start-boost');
+        const stopButton = document.getElementById('stop-boost');
+        const boostTimer = document.getElementById('boost-timer');
+        const steamStatus = document.getElementById('steam-status');
+
+        
+
+
+        // WebSocket event handlers
+        ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        steamUsername.textContent = `Username: ${data.username}`;
+        steamGameId.textContent = `Game ID: ${data.gameId}`;
+        steamGameId.textContent = `Game: ${data.gameTitle} (${data.gameId})`;
+        boostStatus.textContent = `Live Status: ${data.boosting ? 'Boosting' : 'Stopped'}`;
+        boostTimer.textContent = `Duration: ${data.duration || '00:00:00'}`;
+        
+        // Update button states
+        startButton.disabled = data.boosting;
+        stopButton.disabled = !data.boosting;
+        
+        // Update button opacity
+        startButton.style.opacity = data.boosting ? '0.5' : '1';
+        stopButton.style.opacity = data.boosting ? '1' : '0.5';
+    };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            boostStatus.textContent = 'Live Status: Connection Error';
+        };
+
+        ws.onclose = function() {
+            boostStatus.textContent = 'Live Status: Disconnected';
+        };
+
+        steamStatus.addEventListener('change', async () => {
+        try {
+            const response = await fetch('/api/setStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: steamStatus.value })
+            });
+            const result = await response.json();
+            if (!result.success) {
+                console.error('Failed to set status:', result.message);
+            }
+        } catch (error) {
+            console.error('Error setting status:', error);
+        }
+    });
+
+        // Button click handlers
+        startButton.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Failed to start boosting:', result.message);
+                }
+            } catch (error) {
+                console.error('Error starting boost:', error);
+            }
+        });
+
+        stopButton.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const result = await response.json();
+                if (!result.success) {
+                    console.error('Failed to stop boosting:', result.message);
+                }
+            } catch (error) {
+                console.error('Error stopping boost:', error);
+            }
+        });
+    </script>
+
+</body>
+</html>
