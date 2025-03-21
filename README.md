@@ -7,7 +7,9 @@ IdlePlay is a tool that automates Steam playtime for your games, allowing you to
 - Automates playtime for 1 selected game.
 - Keeps track of playtime via a Discord webhook.
 - Lightweight and easy to use with minimal setup.
-
+<p align="center">
+<img src="https://github.com/user-attachments/assets/63f21f3a-2ffb-4cc9-b9ab-bd69021a08f5" width="35%">
+</p>
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/78828194-eb28-4e23-984a-afec84e7fc58" width="45%">
@@ -45,9 +47,29 @@ IdlePlay is a tool that automates Steam playtime for your games, allowing you to
 
     ```
 
-5. Run the application:
+5. Create a `config.json` file in the root directory of the project and add the following text
+    ```bash
+        {
+        "steamUsername": "username",
+        "steamPassword": "password",
+        "webhookURL": "your-webhook-link",
+        "gameIds": [
+            gameid
+        ],
+        "targetChannelId": "putyouridhere",
+        "serverID": "putyouridhere"
+        }
+    ```
+
+6. Run the application:
     ```bash
     node booster.js
+    ```
+
+7. Check to see if you get logged into steam if you see the following you are logged in.
+    If not logged in please input your steam guard code or check your username/password.
+    ```bash
+    ✅ Successfully logged into Steam.
     ```
 
 ## Usage
