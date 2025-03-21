@@ -186,11 +186,6 @@ function sendDiscordWebhook(message) {
     console.log("Discord webhook URL not set. Message not sent.")
     return
   }
-
-  axios
-    .post(webhookURL, { content: message })
-    .then(() => console.log("Discord webhook message sent successfully."))
-    .catch((error) => console.error("Error sending Discord webhook message:", error))
 }
 
 discordClient.once("ready", async () => {
@@ -264,6 +259,18 @@ discordClient.on("interactionCreate", async (interaction) => {
   }
 
   const { commandName, options } = interaction
+  
+  const updateConfig = () => {
+    const updatedConfig = {
+      steamUsername: username,
+      steamPassword: password,
+      webhookURL: webhookURL,
+      gameIds: gameIds,
+      targetChannelId: targetChannelId,
+      serverID: serverID,
+    }
+    fs.writeFileSync("config.json", JSON.stringify(updatedConfig, null, 2))
+  }
 
   if (commandName === "startboost") {
     if (boosting) {
@@ -307,14 +314,19 @@ discordClient.on("interactionCreate", async (interaction) => {
     }
   } else if (commandName === "setusername") {
     username = options.getString("username")
+    steamUsername = username
+    updateConfig()
     await interaction.reply(`Username set to: ${username}`)
   } else if (commandName === "setpassword") {
     password = options.getString("password")
+    steamPassword = password
+    updateConfig()
     await interaction.reply("Password set successfully.")
   } else if (commandName === "setgameid") {
     const newGameId = options.getInteger("gameid")
     if (!isNaN(newGameId)) {
       gameIds = [newGameId]
+      updateConfig()
       await interaction.reply(`Game ID set to: ${newGameId}`)
     } else {
       await interaction.reply("Invalid game ID.")
